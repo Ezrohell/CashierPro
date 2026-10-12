@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="theme-color" content="#0a1628">
+<title>CashierPro - Platform Manajemen Toko</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#050b18;--bg2:#0a1628;--panel:#0f1e35;--panel2:#132744;
+  --line:#1e3a5f;--line2:#2a4d78;
+  --fg:#e6f1ff;--fg2:#8ba8c8;--fg3:#5a7a9a;
+  --acc:#3b9dff;--acc2:#5bdcff;--acc-glow:rgba(91,220,255,.35);
+  --ok:#22c55e;--warn:#f59e0b;--bad:#ef4444;
+  --radius:12px;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--fg);
+  font-family:'Segoe UI',system-ui,-apple-system,Roboto,sans-serif;
+  font-size:14px;line-height:1.5;overscroll-behavior:none}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit;outline:none}
+button{cursor:pointer;border:none;background:none}
+#app{height:100%;display:flex;flex-direction:column;max-width:640px;margin:0 auto;
+  background:radial-gradient(ellipse at top,#0d1f3a 0%,#050b18 60%)}
+
+header{flex:0 0 auto;padding:14px 18px 12px;border-bottom:1px solid var(--line);
+  background:rgba(10,22,40,.85);backdrop-filter:blur(14px);position:relative;z-index:20}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand h1{font-size:14px;font-weight:800;letter-spacing:.3px;color:var(--fg)}
+.brand h1 span{color:var(--acc2);font-weight:900}
+.brand-sub{font-size:10.5px;color:var(--fg3);letter-spacing:1.4px;
+  text-transform:uppercase;margin-top:2px;font-weight:600}
+.status-pill{display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--ok);
+  background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);
+  padding:4px 9px;border-radius:20px;font-weight:700;white-space:nowrap}
+.status-pill::before{content:'';width:6px;height:6px;background:var(--ok);border-radius:50%;
+  box-shadow:0 0 8px var(--ok);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px 24px;position:relative}
+main::-webkit-scrollbar{width:6px}
+main::-webkit-scrollbar-thumb{background:var(--line2);border-radius:99px}
+main::-webkit-scrollbar-track{background:transparent}
+.tab-panel{display:none;animation:slideIn .28s ease}
+.tab-panel.on{display:block}
+@keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.section-title{font-size:11px;font-weight:800;letter-spacing:2px;color:var(--fg3);
+  text-transform:uppercase;margin:16px 0 10px;display:flex;align-items:center;gap:8px}
+.section-title::after{content:'';flex:1;height:1px;background:var(--line)}
+
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 6px;margin-bottom:10px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;padding:8px 16px;border-radius:20px;background:var(--panel);
+  border:1px solid var(--line);color:var(--fg2);font-size:12px;font-weight:700;
+  transition:.15s;white-space:nowrap}
+.chip.on{background:var(--acc);border-color:var(--acc2);color:#fff;box-shadow:0 0 16px var(--acc-glow)}
+
+.product{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  margin-bottom:10px;overflow:hidden;transition:.2s}
+.product.open{border-color:var(--acc);box-shadow:0 0 24px rgba(59,157,255,.15)}
+.product-hd{padding:14px 16px;display:flex;align-items:center;gap:12px;
+  cursor:pointer;user-select:none;transition:.15s}
+.product-hd:active{background:var(--panel2)}
+.product-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;
+  justify-content:center;font-size:20px;background:var(--panel2);border:1px solid var(--line2);flex-shrink:0}
+.product-info{flex:1;min-width:0}
+.product-name{font-size:14px;font-weight:700;color:var(--fg);margin-bottom:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.product-meta{font-size:11px;color:var(--fg3);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.stock-badge{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:800}
+.stock-badge.ok{background:rgba(34,197,94,.15);color:#5fe28e;border:1px solid rgba(34,197,94,.3)}
+.stock-badge.low{background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.3)}
+.stock-badge.out{background:rgba(239,68,68,.15);color:#f87171;border:1px solid rgba(239,68,68,.3)}
+.chev{width:22px;height:22px;color:var(--fg3);transition:transform .3s cubic-bezier(.4,0,.2,1);flex-shrink:0}
+.product.open .chev{transform:rotate(180deg);color:var(--acc2)}
+
+.expand{max-height:0;overflow:hidden;transition:max-height .35s cubic-bezier(.4,0,.2,1);background:rgba(0,0,0,.25)}
+.product.open .expand{max-height:1200px}
+.expand-inner{padding:4px 16px 16px;border-top:1px solid var(--line)}
+
+.opt-group{margin-top:14px}
+.opt-group-label{font-size:10.5px;font-weight:800;letter-spacing:1.5px;color:var(--fg3);
+  text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.opt-group-label::after{content:'';flex:1;height:1px;background:var(--line);opacity:.6}
+.opt{display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:10px;
+  background:var(--bg2);border:1px solid var(--line);margin-bottom:7px;cursor:pointer;transition:.15s}
+.opt:hover{border-color:var(--line2);background:var(--panel2)}
+.opt input{display:none}
+.opt-name{flex:1;font-size:13px;font-weight:600;color:var(--fg)}
+.opt-price{font-size:12px;font-weight:800;color:var(--acc2)}
+.opt-radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--line2);flex-shrink:0;transition:.15s}
+.opt input:checked ~ .opt-radio{border-color:var(--acc2);background:var(--acc2);
+  box-shadow:0 0 12px var(--acc-glow),inset 0 0 0 3px var(--bg2)}
+.opt input:checked ~ .opt-name{color:var(--acc2)}
+.opt:has(input:checked){border-color:var(--acc);background:var(--panel2)}
+
+.add-btn{width:100%;margin-top:14px;padding:13px;border-radius:10px;
+  background:linear-gradient(135deg,var(--acc),#2563eb);color:#fff;
+  font-weight:800;font-size:13px;letter-spacing:.8px;text-transform:uppercase;
+  box-shadow:0 6px 20px rgba(59,157,255,.35);transition:.15s}
+.add-btn:active{transform:translateY(2px);box-shadow:0 2px 8px rgba(59,157,255,.3)}
+.add-btn:disabled{background:var(--panel2);color:var(--fg3);box-shadow:none;cursor:not-allowed;transform:none}
+
+.cart{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-top:16px}
+.cart-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.cart-hd strong{font-size:11px;font-weight:800;letter-spacing:2px;color:var(--fg3);text-transform:uppercase}
+.cart-hd .count{background:var(--acc);color:#fff;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:800}
+.cart-empty{padding:24px 12px;text-align:center;color:var(--fg3);font-size:12px;font-style:italic}
+.cart-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);animation:itemIn .25s ease}
+@keyframes itemIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+.cart-item:last-child{border-bottom:none}
+.cart-item-name{flex:1;font-size:12.5px;font-weight:600;color:var(--fg)}
+.cart-item-qty{font-size:11px;color:var(--fg3);margin-right:6px}
+.cart-item-price{font-size:12.5px;font-weight:700;color:var(--acc2);margin-right:8px;white-space:nowrap}
+.cart-item-minus{width:24px;height:24px;border-radius:6px;background:var(--bg2);
+  border:1px solid var(--line2);color:var(--fg2);font-weight:800;font-size:14px;
+  display:flex;align-items:center;justify-content:center}
+.cart-item-minus:active{background:var(--bad);color:#fff;border-color:var(--bad)}
+.cart-total{display:flex;justify-content:space-between;padding-top:12px;margin-top:8px;
+  border-top:1px solid var(--line2);font-size:13px;font-weight:700}
+.cart-total .amt{color:var(--acc2);font-size:16px;font-weight:900}
+
+.checkout-btn{width:100%;margin-top:14px;padding:15px;border-radius:12px;
+  background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;font-weight:800;
+  font-size:13px;letter-spacing:1px;text-transform:uppercase;
+  box-shadow:0 6px 22px rgba(34,197,94,.35);transition:.15s}
+.checkout-btn:active{transform:translateY(2px)}
+.checkout-btn:disabled{background:var(--panel2);color:var(--fg3);box-shadow:none;cursor:not-allowed;transform:none}
+
+.rating-form,.card-block{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+.rating-form h2{font-size:14px;font-weight:800;color:var(--fg);margin-bottom:4px}
+.rating-form p.sub{font-size:11.5px;color:var(--fg3);margin-bottom:14px}
+.field-group{margin-bottom:14px}
+.field-label{display:block;font-size:10.5px;font-weight:800;letter-spacing:1.5px;
+  color:var(--fg3);text-transform:uppercase;margin-bottom:6px}
+.field{width:100%;padding:11px 13px;border-radius:9px;background:var(--bg2);
+  border:1px solid var(--line);color:var(--fg);font-size:13px;transition:.15s}
+.field:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(59,157,255,.15)}
+textarea.field{resize:vertical;min-height:80px;font-family:inherit}
+
+.star-slider-wrap{text-align:center;padding:12px 0 4px}
+.star-display{font-size:34px;font-weight:900;color:var(--warn);letter-spacing:2px;
+  line-height:1;text-shadow:0 0 20px rgba(245,158,11,.4);margin-bottom:4px}
+.star-display .suffix{font-size:16px;color:var(--fg3);font-weight:700}
+.star-caption{font-size:11px;color:var(--fg3);letter-spacing:1px;
+  text-transform:uppercase;font-weight:700;margin-bottom:12px}
+
+.slider-row{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.slider-row input[type=range]{flex:1}
+.keyboard-hint{font-size:10.5px;color:var(--fg3);margin-bottom:12px;text-align:center;
+  display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}
+.kbd{background:var(--bg2);border:1px solid var(--line2);border-radius:5px;
+  padding:1px 6px;font-family:'Courier New',monospace;font-size:10px;
+  font-weight:700;color:var(--fg2)}
+
+input[type=range]{-webkit-appearance:none;width:100%;height:8px;border-radius:4px;
+  background:linear-gradient(90deg,var(--bad) 0%,var(--warn) 50%,var(--ok) 100%);
+  outline:none;padding:0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;
+  border-radius:50%;background:#fff;border:3px solid var(--acc);
+  box-shadow:0 0 12px var(--acc-glow);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;
+  background:#fff;border:3px solid var(--acc);cursor:pointer}
+.rating-marks{display:flex;justify-content:space-between;font-size:10px;
+  color:var(--fg3);font-weight:700}
+
+/* Rating input numeric field */
+.score-input-row{display:flex;align-items:center;gap:10px;
+  background:var(--bg2);border:1px solid var(--line);border-radius:9px;
+  padding:10px 12px;margin-bottom:10px}
+.score-input-row label{font-size:11px;font-weight:800;color:var(--fg3);
+  text-transform:uppercase;letter-spacing:1.2px;white-space:nowrap}
+.score-input-row input[type=number]{flex:1;background:transparent;border:none;
+  color:var(--warn);font-size:20px;font-weight:900;text-align:center;
+  letter-spacing:1px;padding:2px}
+.score-input-row input[type=number]::-webkit-outer-spin-button,
+.score-input-row input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.score-input-row input[type=number]{-moz-appearance:textfield}
+.score-input-row .unit{font-size:12px;color:var(--fg3);font-weight:700}
+
+.btn-primary{width:100%;padding:13px;border-radius:10px;
+  background:linear-gradient(135deg,var(--acc),#2563eb);color:#fff;font-weight:800;
+  font-size:12.5px;letter-spacing:1px;text-transform:uppercase;
+  box-shadow:0 5px 18px rgba(59,157,255,.3);transition:.15s}
+.btn-primary:active{transform:translateY(2px)}
+.btn-primary:disabled{background:var(--panel2);color:var(--fg3);box-shadow:none;cursor:not-allowed;transform:none}
+
+.review{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:14px;margin-bottom:10px;animation:itemIn .25s ease}
+.review-hd{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px}
+.review-name{font-size:13px;font-weight:700;color:var(--fg)}
+.review-date{font-size:10.5px;color:var(--fg3);margin-top:2px}
+.review-score{font-size:14px;font-weight:900;color:var(--warn);white-space:nowrap}
+.review-score .s{font-size:11px;color:var(--fg3);font-weight:600}
+.review-text{font-size:12.5px;color:var(--fg2);line-height:1.6}
+
+.empty-state{padding:32px 16px;text-align:center;color:var(--fg3)}
+.empty-state .ico{font-size:36px;opacity:.4;margin-bottom:10px}
+.empty-state p{font-size:12px;font-style:italic}
+.empty-state .sub{font-size:11px;margin-top:4px;opacity:.7}
+
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.stat-box{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;text-align:center}
+.stat-val{font-size:22px;font-weight:900;color:var(--acc2);line-height:1;margin-bottom:6px}
+.stat-lbl{font-size:10px;font-weight:800;letter-spacing:1.5px;color:var(--fg3);text-transform:uppercase}
+
+.login-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px 18px;max-width:400px;margin:16px auto}
+.login-icon{width:56px;height:56px;border-radius:16px;background:var(--panel2);
+  border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;
+  font-size:26px;margin:0 auto 14px}
+.login-card h2{text-align:center;font-size:16px;font-weight:800;margin-bottom:4px}
+.login-card .sub{text-align:center;font-size:11.5px;color:var(--fg3);margin-bottom:20px}
+.err-msg{background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);
+  color:#fca5a5;font-size:11.5px;padding:9px 12px;border-radius:8px;margin-bottom:12px;display:none}
+.err-msg.show{display:block}
+.ok-msg{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);
+  color:#86efac;font-size:11.5px;padding:9px 12px;border-radius:8px;margin-bottom:12px;display:none}
+.ok-msg.show{display:block}
+
+.admin-hd{display:flex;justify-content:space-between;align-items:center;
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  padding:13px 16px;margin-bottom:14px}
+.admin-hd .user{font-size:12px}
+.admin-hd .user strong{display:block;color:var(--acc2);font-size:13px;font-weight:800;margin-bottom:2px}
+.admin-hd .user span{color:var(--fg3);font-size:10.5px}
+.logout-btn{padding:7px 13px;border-radius:8px;background:transparent;
+  border:1px solid var(--bad);color:#f87171;font-size:11px;font-weight:800;
+  letter-spacing:.8px;text-transform:uppercase;transition:.15s}
+.logout-btn:active{background:rgba(239,68,68,.15)}
+
+.admin-block{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.admin-block h3{font-size:12px;font-weight:800;letter-spacing:1.5px;color:var(--acc2);
+  text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.admin-block h3::after{content:'';flex:1;height:1px;background:var(--line)}
+
+.stock-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+.stock-row:last-child{border-bottom:none}
+.stock-row .lbl{flex:1;color:var(--fg);font-weight:600}
+.stock-row input{width:70px;padding:7px 9px;border-radius:7px;background:var(--bg2);
+  border:1px solid var(--line);color:var(--acc2);text-align:center;font-weight:700;font-size:12.5px}
+.stock-row input:focus{border-color:var(--acc)}
+
+.report-line{display:flex;justify-content:space-between;padding:8px 0;
+  border-bottom:1px solid var(--line);font-size:12px;gap:10px}
+.report-line:last-child{border-bottom:none}
+.report-line .lbl{color:var(--fg2);flex:1}
+.report-line .val{color:var(--acc2);font-weight:700;white-space:nowrap}
+.report-line.bold{border-top:1px solid var(--line2);margin-top:4px;padding-top:12px}
+.report-line.bold .lbl{font-weight:800;color:var(--fg)}
+.report-line.bold .val{font-size:14px}
+
+.btn-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.btn-row button{flex:1;min-width:120px;padding:10px;border-radius:8px;font-size:11.5px;
+  font-weight:800;letter-spacing:.7px;text-transform:uppercase;transition:.15s}
+.btn-sec{background:var(--bg2);border:1px solid var(--line2);color:var(--fg)}
+.btn-sec:active{background:var(--panel2);border-color:var(--acc)}
+.btn-ok{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff}
+.btn-warn{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff}
+
+nav{flex:0 0 auto;display:grid;grid-template-columns:repeat(3,1fr);
+  background:rgba(10,22,40,.95);backdrop-filter:blur(14px);
+  border-top:1px solid var(--line);padding:8px 6px calc(8px + env(safe-area-inset-bottom));
+  position:relative;z-index:30}
+.nav-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;padding:8px 4px;border-radius:10px;color:var(--fg3);font-size:10.5px;
+  font-weight:700;transition:.15s}
+.nav-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round;transition:.15s}
+.nav-btn.on{color:var(--acc2)}
+.nav-btn.on svg{filter:drop-shadow(0 0 8px var(--acc-glow))}
+.nav-btn:active{transform:scale(.95)}
+
+#toast{position:fixed;left:50%;bottom:-100px;transform:translateX(-50%);
+  background:var(--panel);border:1px solid var(--acc);color:var(--fg);
+  padding:12px 22px;border-radius:12px;font-size:12.5px;font-weight:700;
+  box-shadow:0 10px 40px rgba(0,0,0,.5),0 0 24px var(--acc-glow);
+  transition:bottom .5s cubic-bezier(.68,-.55,.27,1.55);z-index:9999;
+  max-width:calc(100% - 32px);text-align:center}
+#toast.show{bottom:90px}
+
+.loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--fg3);font-size:12px}
+.loading::before{content:'';width:18px;height:18px;border:2px solid var(--line2);
+  border-top-color:var(--acc);border-radius:50%;margin-right:10px;
+  animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hidden{display:none !important}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header>
+    <div class="brand">
+      <div>
+        <h1>Cashier<span>Pro</span></h1>
+        <div class="brand-sub" id="brandSub">Platform Manajemen Toko</div>
+      </div>
+      <div class="status-pill">Server Aktif</div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section id="tab-store" class="tab-panel on">
+      <div class="chips" id="chips"></div>
+      <div id="productList"><div class="loading">Memuat produk</div></div>
+      <div class="cart">
+        <div class="cart-hd">
+          <strong>Keranjang Belanja</strong>
+          <span class="count" id="cartCount">0</span>
+        </div>
+        <div id="cartItems"><div class="cart-empty">Keranjang Anda masih kosong</div></div>
+        <div class="cart-total">
+          <span>Total Pembayaran</span>
+          <span class="amt">Rp <span id="cartTotal">0</span></span>
+        </div>
+      </div>
+      <button class="checkout-btn" id="checkoutBtn" disabled>Konfirmasi & Checkout</button>
+    </section>
+
+    <section id="tab-rating" class="tab-panel">
+      <div class="stats-grid">
+        <div class="stat-box"><div class="stat-val" id="avgRating">0.0</div><div class="stat-lbl">Rata-rata</div></div>
+        <div class="stat-box"><div class="stat-val" id="totalReviews">0</div><div class="stat-lbl">Total Ulasan</div></div>
+      </div>
+
+      <div class="rating-form">
+        <h2>Berikan Ulasan Anda</h2>
+        <p class="sub">Pendapat Anda membantu kami meningkatkan kualitas layanan.</p>
+
+        <div class="field-group">
+          <label class="field-label">Nama (opsional)</label>
+          <input type="text" class="field" id="rvName" placeholder="Nama atau anonim" maxlength="40">
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Penilaian</label>
+          <div class="star-slider-wrap">
+            <div class="star-display"><span id="rvScoreDisplay">5.0</span><span class="suffix"> / 5.0</span></div>
+            <div class="star-caption" id="rvCaption">Sangat Baik</div>
+
+            <div class="score-input-row">
+              <label>Ketik Nilai</label>
+              <input type="number" id="rvNumber" min="1" max="5" step="0.1" value="5" inputmode="decimal">
+              <span class="unit">/ 5.0</span>
+            </div>
+
+            <div class="slider-row">
+              <input type="range" id="rvScore" min="1" max="5" step="0.1" value="5">
+            </div>
+
+            <div class="rating-marks">
+              <span>1.0</span><span>2.0</span><span>3.0</span><span>4.0</span><span>5.0</span>
+            </div>
+
+            <div class="keyboard-hint">
+              Gunakan <span class="kbd">←</span> <span class="kbd">→</span> pada slider,
+              atau ketik langsung di kolom angka.
+            </div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Komentar</label>
+          <textarea class="field" id="rvText" placeholder="Tuliskan pengalaman Anda — apa yang bagus, apa yang perlu diperbaiki..." maxlength="800"></textarea>
+        </div>
+
+        <button class="btn-primary" id="rvSubmit">Kirim Ulasan</button>
+      </div>
+
+      <div class="section-title">Ulasan Pelanggan</div>
+      <div id="reviewList"><div class="loading">Memuat ulasan</div></div>
+    </section>
+
+    <section id="tab-admin" class="tab-panel">
+      <div id="loginView">
+        <div class="login-card">
+          <div class="login-icon">🔐</div>
+          <h2>Masuk Panel Admin</h2>
+          <p class="sub">Kelola inventaris, laporan, dan transaksi toko Anda.</p>
+
+          <div class="err-msg" id="loginErr"></div>
+
+          <div class="field-group">
+            <label class="field-label">Alamat Email</label>
+            <input type="email" class="field" id="loginEmail" placeholder="nama@perusahaan.com" autocomplete="email">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Kata Sandi</label>
+            <input type="password" class="field" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+          </div>
+
+          <button class="btn-primary" id="loginBtn">Masuk Sekarang</button>
+        </div>
+      </div>
+
+      <div id="adminView" class="hidden">
+        <div class="admin-hd">
+          <div class="user">
+            <strong id="adminEmail">—</strong>
+            <span>Administrator Utama</span>
+          </div>
+          <button class="logout-btn" id="logoutBtn">Keluar</button>
+        </div>
+
+        <div class="admin-block">
+          <h3>Pengaturan Stok Harian</h3>
+          <div id="stockEditor"><div class="loading">Memuat</div></div>
+          <div class="btn-row">
+            <button class="btn-ok" id="saveStockBtn">Simpan</button>
+            <button class="btn-warn" id="resetDailyBtn">Reset Hari Ini</button>
+          </div>
+        </div>
+
+        <div class="admin-block">
+          <h3>Laporan Penjualan</h3>
+          <div id="salesReport"><div class="loading">Memuat</div></div>
+          <div class="btn-row">
+            <button class="btn-sec" id="exportCsvBtn">Unduh CSV</button>
+            <button class="btn-sec" id="exportJsonBtn">Ekspor Backup</button>
+          </div>
+        </div>
+
+        <div class="admin-block">
+          <h3>Catatan Arus Kas</h3>
+          <div class="field-group">
+            <label class="field-label">Jenis Transaksi</label>
+            <select class="field" id="cashType">
+              <option value="expense">Pengeluaran</option>
+              <option value="income">Pemasukan</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Deskripsi</label>
+            <input class="field" id="cashDesc" placeholder="Contoh: Pembelian bahan baku">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Jumlah (Rp)</label>
+            <input class="field" id="cashAmount" type="number" min="1" placeholder="0">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Nama Pemasok</label>
+            <input class="field" id="cashVendor" placeholder="Opsional">
+          </div>
+          <button class="btn-primary" id="cashSubmitBtn">Catat Transaksi</button>
+          <div id="cashReport" style="margin-top:14px"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <nav>
+    <button class="nav-btn on" data-tab="store">
+      <svg viewBox="0 0 24 24"><path d="M3 9l1-5h16l1 5"/><path d="M4 9v11h16V9"/><path d="M9 22V12h6v10"/></svg>
+      <span>Toko</span>
+    </button>
+    <button class="nav-btn" data-tab="rating">
+      <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <span>Rating</span>
+    </button>
+    <button class="nav-btn" data-tab="admin">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 8.6 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 8.6a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.63.85 1.05 1.51 1H21a2 2 0 1 1 0 4h-.09c-.66 0-1.25.42-1.51 1z"/></svg>
+      <span>Admin</span>
+    </button>
+  </nav>
+</div>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+
+/* ---------- Util ---------- */
+const $ = id => document.getElementById(id);
+const fmt = n => Number(n || 0).toLocaleString("id-ID");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+let toastTimer;
+function toast(msg, ok) {
+  const el = $("toast");
+  el.textContent = msg;
+  el.style.borderColor = ok === false ? "var(--bad)" : "var(--acc)";
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2400);
+}
+
+async function api(path, opts) {
+  const r = await fetch(path, Object.assign({
+    headers: { "Content-Type": "application/json" },
+    credentials: "same-origin"
+  }, opts || {}));
+  let data = null;
+  try { data = await r.json(); } catch(e){}
+  if (!r.ok) throw Object.assign(new Error("HTTP " + r.status), { status: r.status, data });
+  return data;
+}
+
+/* ---------- State ---------- */
+const S = {
+  tab: "store",
+  category: "all",
+  cart: [],
+  openProduct: null,
+  isAdmin: false,
+  master: [],
+  stock: { limits: {}, dailySold: {} },
+  sales: [],
+  cashflow: [],
+  reviews: [],
+  avg: 0,
+  total: 0
+};
+
+/* ---------- Tabs ---------- */
+document.querySelectorAll(".nav-btn").forEach(b => {
+  b.addEventListener("click", () => switchTab(b.dataset.tab));
+});
+function switchTab(tab) {
+  S.tab = tab;
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
+  document.querySelectorAll(".tab-panel").forEach(p => p.classList.toggle("on", p.id === "tab-" + tab));
+  $("brandSub").textContent = {
+    store: "Platform Manajemen Toko",
+    rating: "Ulasan & Kepuasan Pelanggan",
+    admin: "Panel Administrator"
+  }[tab] || "";
+  $("main").scrollTop = 0;
+  if (tab === "rating") loadReviews();
+  if (tab === "admin") initAdmin();
+}
+
+/* ---------- Products ---------- */
+async function loadProducts() {
+  try {
+    const data = await api("/api/products");
+    S.master = data.master;
+    S.stock = data.stock;
+    renderChips();
+    renderProducts();
+  } catch (e) {
+    $("productList").innerHTML = '<div class="empty-state"><p>Gagal memuat produk</p></div>';
+  }
+}
+
+function todayKey() { return new Date().toLocaleDateString("en-CA"); }
+function remainingStock(id) {
+  const limit = Number(S.stock.limits[id] ?? 20);
+  const sold = Number(S.stock.dailySold[todayKey()]?.[id] || 0);
+  return Math.max(0, limit - sold);
+}
+
+function renderChips() {
+  const cats = [{id:"all",label:"Semua"},{id:"food",label:"Makanan"},{id:"drink",label:"Minuman"}];
+  $("chips").innerHTML = cats.map(c =>
+    `<button class="chip ${S.category===c.id?'on':''}" data-cat="${c.id}">${c.label}</button>`
+  ).join("");
+  $("chips").querySelectorAll("[data-cat]").forEach(b => {
+    b.addEventListener("click", () => {
+      S.category = b.dataset.cat;
+      renderChips();
+      renderProducts();
+    });
+  });
+}
+
+function renderProducts() {
+  const list = S.master.filter(m => S.category === "all" || m.category === S.category);
+  $("productList").innerHTML = list.map(m => {
+    const stock = remainingStock(m.id);
+    const out = stock <= 0;
+    const badgeClass = out ? "out" : (stock <= 5 ? "low" : "ok");
+    const badgeText = out ? "Stok Habis" : (stock <= 5 ? `Tersisa ${stock}` : `${stock} tersedia`);
+    const isOpen = S.openProduct === m.id;
+
+    const variants = m.items.map((it, i) =>
+      `<label class="opt">
+        <input type="radio" name="v-${m.id}" value="${esc(it[0])}|${it[1]}" ${i===0?"checked":""}>
+        <span class="opt-name">${esc(it[0])}</span>
+        <span class="opt-price">Rp ${fmt(it[1])}</span>
+        <span class="opt-radio"></span>
+      </label>`
+    ).join("");
+
+    const sizesHtml = m.sizes ? `
+      <div class="opt-group">
+        <div class="opt-group-label">Ukuran / Opsi</div>
+        ${m.sizes.map((z, i) =>
+          `<label class="opt">
+            <input type="radio" name="s-${m.id}" value="${esc(z[0])}|${z[1]}" ${i===0?"checked":""}>
+            <span class="opt-name">${esc(z[0])}</span>
+            <span class="opt-price">${z[1]===0?"Standar":"+ Rp " + fmt(z[1])}</span>
+            <span class="opt-radio"></span>
+          </label>`
+        ).join("")}
+      </div>` : "";
+
+    return `
+      <div class="product ${isOpen?'open':''}" data-prod="${m.id}">
+        <div class="product-hd" data-toggle="${m.id}">
+          <div class="product-ico">${m.icon}</div>
+          <div class="product-info">
+            <div class="product-name">${esc(m.name)}</div>
+            <div class="product-meta">
+              <span class="stock-badge ${badgeClass}">${badgeText}</span>
+              <span>${m.items.length} varian</span>
+            </div>
+          </div>
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="expand">
+          <div class="expand-inner">
+            <div class="opt-group">
+              <div class="opt-group-label">Pilih Varian</div>
+              ${variants}
+            </div>
+            ${sizesHtml}
+            <button class="add-btn" data-add="${m.id}" ${out?"disabled":""}>
+              ${out ? "Stok Tidak Tersedia" : "Tambahkan ke Keranjang"}
+            </button>
+          </div>
+        </div>
+      </div>`;
+  }).join("");
+
+  $("productList").querySelectorAll("[data-toggle]").forEach(hd => {
+    hd.addEventListener("click", () => {
+      const id = hd.dataset.toggle;
+      S.openProduct = S.openProduct === id ? null : id;
+      renderProducts();
+    });
+  });
+  $("productList").querySelectorAll("[data-add]").forEach(btn => {
+    btn.addEventListener("click", e => { e.stopPropagation(); addToCart(btn.dataset.add); });
+  });
+}
+
+function addToCart(productId) {
+  const m = S.master.find(x => x.id === productId);
+  if (!m) return;
+  if (remainingStock(productId) <= 0) { toast("Produk tidak tersedia", false); return; }
+
+  const varEl = document.querySelector(`input[name="v-${productId}"]:checked`);
+  if (!varEl) return;
+  const szEl = document.querySelector(`input[name="s-${productId}"]:checked`);
+  const [vName, vPrice] = varEl.value.split("|");
+  const [sName, sPrice] = szEl ? szEl.value.split("|") : ["","0"];
+
+  const label = sName && !["Regular","Standard","Polos"].includes(sName)
+    ? `${m.name} ${vName} (${sName})`
+    : `${m.name} ${vName}`;
+  const price = parseInt(vPrice,10) + parseInt(sPrice,10);
+
+  const qtyInCart = S.cart.filter(i => i.pid === productId).reduce((s,i) => s+i.qty, 0);
+  if (qtyInCart >= remainingStock(productId)) {
+    toast("Jumlah di keranjang sudah mencapai batas stok", false);
+    return;
+  }
+  const existing = S.cart.find(i => i.name === label);
+  if (existing) existing.qty++;
+  else S.cart.push({ pid: productId, name: label, price, qty: 1 });
+  toast(`"${label}" ditambahkan`);
+  renderCart();
+}
+
+function renderCart() {
+  const box = $("cartItems");
+  if (S.cart.length === 0) {
+    box.innerHTML = `<div class="cart-empty">Keranjang Anda masih kosong</div>`;
+  } else {
+    box.innerHTML = S.cart.map(i => `
+      <div class="cart-item">
+        <span class="cart-item-name">${esc(i.name)}</span>
+        <span class="cart-item-qty">x${i.qty}</span>
+        <span class="cart-item-price">Rp ${fmt(i.price * i.qty)}</span>
+        <button class="cart-item-minus" data-rm="${esc(i.name)}">−</button>
+      </div>`).join("");
+    box.querySelectorAll("[data-rm]").forEach(b => {
+      b.addEventListener("click", () => removeItem(b.dataset.rm));
+    });
+  }
+  const total = S.cart.reduce((s,i) => s + i.price*i.qty, 0);
+  const count = S.cart.reduce((s,i) => s + i.qty, 0);
+  $("cartTotal").textContent = fmt(total);
+  $("cartCount").textContent = count;
+  $("checkoutBtn").disabled = S.cart.length === 0;
+}
+
+function removeItem(name) {
+  const idx = S.cart.findIndex(i => i.name === name);
+  if (idx === -1) return;
+  S.cart[idx].qty--;
+  if (S.cart[idx].qty <= 0) S.cart.splice(idx,1);
+  renderCart();
+}
+
+$("checkoutBtn").addEventListener("click", async () => {
+  if (S.cart.length === 0) return;
+  $("checkoutBtn").disabled = true;
+  try {
+    const data = await api("/api/sales", {
+      method: "POST",
+      body: JSON.stringify({ items: S.cart })
+    });
+    const tx = data.tx;
+    toast("Transaksi " + tx.id + " berhasil");
+    S.cart = [];
+    renderCart();
+    await loadProducts();
+  } catch (e) {
+    const err = e.data && e.data.error;
+    if (err === "stock_exceeded") toast("Stok harian tidak mencukupi", false);
+    else toast("Gagal memproses transaksi", false);
+    $("checkoutBtn").disabled = false;
+  }
+});
+
+/* ---------- Rating ---------- */
+const CAPTIONS = [
+  { min: 4.5, text: "Sangat Baik", color: "#22c55e" },
+  { min: 3.5, text: "Baik",         color: "#84cc16" },
+  { min: 2.5, text: "Cukup",        color: "#f59e0b" },
+  { min: 1.5, text: "Kurang",       color: "#f97316" },
+  { min: 0,   text: "Sangat Kurang",color: "#ef4444" }
+];
+
+function clampScore(v) {
+  let n = Number(v);
+  if (!Number.isFinite(n)) n = 5;
+  n = Math.max(1, Math.min(5, n));
+  return Math.round(n * 10) / 10;
+}
+
+function syncRatingDisplay() {
+  const v = clampScore($("rvScore").value);
+  $("rvScoreDisplay").textContent = v.toFixed(1);
+  const cap = CAPTIONS.find(c => v >= c.min);
+  $("rvCaption").textContent = cap.text;
+  $("rvCaption").style.color = cap.color;
+}
+
+/* slider */
+$("rvScore").addEventListener("input", () => {
+  $("rvNumber").value = clampScore($("rvScore").value).toFixed(1);
+  syncRatingDisplay();
+});
+
+/* numeric input — mendukung ketik langsung & panah keyboard */
+$("rvNumber").addEventListener("input", () => {
+  const raw = $("rvNumber").value;
+  if (raw === "" || raw === "." || raw === "-") return;
+  const v = clampScore(raw);
+  $("rvScore").value = v;
+  syncRatingDisplay();
+});
+$("rvNumber").addEventListener("blur", () => {
+  const v = clampScore($("rvNumber").value);
+  $("rvNumber").value = v.toFixed(1);
+  $("rvScore").value = v;
+  syncRatingDisplay();
+});
+
+/* ArrowUp / ArrowDown pada input number akan memicu 'input' secara native.
+   Pastikan sinkronisasi juga saat keydown untuk responsif. */
+$("rvNumber").addEventListener("keydown", e => {
+  if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+    setTimeout(() => {
+      const v = clampScore($("rvNumber").value);
+      $("rvScore").value = v;
+      syncRatingDisplay();
+    }, 0);
+  }
+});
+
+syncRatingDisplay();
+
+async function loadReviews() {
+  try {
+    const data = await api("/api/reviews");
+    S.reviews = data.reviews || [];
+    S.avg = data.avg || 0;
+    S.total = data.total || 0;
+    $("avgRating").textContent = S.avg.toFixed(1);
+    $("totalReviews").textContent = S.total;
+
+    const box = $("reviewList");
+    if (!S.reviews.length) {
+      box.innerHTML = `<div class="empty-state">
+        <div class="ico">💬</div>
+        <p>Belum ada ulasan</p>
+        <div class="sub">Jadilah yang pertama memberikan pendapat</div>
+      </div>`;
+      return;
+    }
+    box.innerHTML = S.reviews.map(r => {
+      const d = new Date(r.date);
+      const dateStr = d.toLocaleDateString("id-ID", { day:"numeric", month:"short", year:"numeric" });
+      return `<div class="review">
+        <div class="review-hd">
+          <div>
+            <div class="review-name">${esc(r.name)}</div>
+            <div class="review-date">${dateStr}</div>
+          </div>
+          <div class="review-score">${Number(r.score).toFixed(1)}<span class="s"> / 5.0</span></div>
+        </div>
+        <div class="review-text">${esc(r.text)}</div>
+      </div>`;
+    }).join("");
+  } catch (e) {
+    $("reviewList").innerHTML = '<div class="empty-state"><p>Gagal memuat ulasan</p></div>';
+  }
+}
+
+$("rvSubmit").addEventListener("click", async () => {
+  const score = clampScore($("rvNumber").value || $("rvScore").value);
+  const name = $("rvName").value.trim();
+  const text = $("rvText").value.trim();
+  if (!text) { toast("Mohon tuliskan komentar Anda", false); return; }
+  if (text.length < 4) { toast("Komentar terlalu pendek", false); return; }
+
+  const btn = $("rvSubmit");
+  btn.disabled = true;
+  try {
+    await api("/api/reviews", {
+      method: "POST",
+      body: JSON.stringify({ name, score, text })
+    });
+    $("rvName").value = "";
+    $("rvText").value = "";
+    $("rvNumber").value = "5.0";
+    $("rvScore").value = 5;
+    syncRatingDisplay();
+    toast("Terima kasih atas ulasan Anda");
+    await loadReviews();
+  } catch (e) {
+    toast("Gagal mengirim ulasan", false);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+/* ---------- Admin ---------- */
+async function initAdmin() {
+  try {
+    const s = await api("/api/session");
+    if (s.admin) {
+      S.isAdmin = true;
+      showAdminPanel(s.email);
+    } else {
+      showLogin();
+    }
+  } catch (e) {
+    showLogin();
+  }
+}
+
+function showLogin() {
+  $("loginView").classList.remove("hidden");
+  $("adminView").classList.add("hidden");
+}
+function showAdminPanel(email) {
+  $("loginView").classList.add("hidden");
+  $("adminView").classList.remove("hidden");
+  $("adminEmail").textContent = email || "—";
+  loadStockEditor();
+  loadSalesReport();
+  loadCashReport();
+}
+
+$("loginBtn").addEventListener("click", async () => {
+  const email = $("loginEmail").value.trim();
+  const password = $("loginPass").value;
+  const err = $("loginErr");
+  err.classList.remove("show");
+  try {
+    await api("/api/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password })
+    });
+    $("loginPass").value = "";
+    toast("Selamat datang, Administrator");
+    S.isAdmin = true;
+    showAdminPanel(email);
+  } catch (e) {
+    err.textContent = "Email atau kata sandi tidak sesuai.";
+    err.classList.add("show");
+  }
+});
+
+$("logoutBtn").addEventListener("click", async () => {
+  try { await api("/api/logout", { method: "POST" }); } catch(e){}
+  S.isAdmin = false;
+  $("loginEmail").value = "";
+  $("loginPass").value = "";
+  $("loginErr").classList.remove("show");
+  showLogin();
+  toast("Anda telah keluar dari sesi admin");
+});
+
+async function loadStockEditor() {
+  try {
+    const data = await api("/api/products");
+    S.master = data.master;
+    S.stock = data.stock;
+    $("stockEditor").innerHTML = S.master.map(m => {
+      const val = Number(S.stock.limits[m.id] ?? 20);
+      const sold = Number(S.stock.dailySold[todayKey()]?.[m.id] || 0);
+      return `<div class="stock-row">
+        <span class="lbl">${m.icon} ${esc(m.name)}</span>
+        <span style="font-size:11px;color:var(--fg3)">Terjual: ${sold}</span>
+        <input type="number" min="0" max="9999" value="${val}" data-lim="${m.id}">
+      </div>`;
+    }).join("");
+  } catch (e) {
+    $("stockEditor").innerHTML = '<div class="empty-state"><p>Gagal memuat</p></div>';
+  }
+}
+
+$("saveStockBtn").addEventListener("click", async () => {
+  const limits = {};
+  document.querySelectorAll("[data-lim]").forEach(inp => {
+    limits[inp.dataset.lim] = Math.max(0, Number(inp.value || 0));
+  });
+  try {
+    await api("/api/stock", { method: "POST", body: JSON.stringify({ limits }) });
+    toast("Pengaturan stok disimpan");
+    await loadProducts();
+    await loadStockEditor();
+  } catch (e) {
+    toast("Gagal menyimpan", false);
+  }
+});
+
+$("resetDailyBtn").addEventListener("click", async () => {
+  if (!confirm("Reset jumlah penjualan hari ini?")) return;
+  try {
+    await api("/api/stock/reset-daily", { method: "POST" });
+    toast("Penjualan hari ini direset");
+    await loadStockEditor();
+    await loadProducts();
+  } catch (e) {
+    toast("Gagal reset", false);
+  }
+});
+
+async function loadSalesReport() {
+  try {
+    const data = await api("/api/sales");
+    S.sales = data.sales;
+    const today = todayKey();
+    const todays = S.sales.filter(t => new Date(t.timestamp).toLocaleDateString("en-CA") === today);
+    const todayTotal = todays.reduce((s,t) => s + t.total, 0);
+    const allTotal = S.sales.reduce((s,t) => s + t.total, 0);
+
+    const grouped = {};
+    S.sales.forEach(t => t.items.forEach(i => {
+      grouped[i.name] = grouped[i.name] || { qty: 0, total: 0 };
+      grouped[i.name].qty += i.qty;
+      grouped[i.name].total += i.qty * i.price;
+    }));
+    const top = Object.entries(grouped).sort((a,b) => b[1].qty - a[1].qty).slice(0, 5);
+
+    let html = `
+      <div class="report-line"><span class="lbl">Transaksi Hari Ini</span><span class="val">${todays.length}</span></div>
+      <div class="report-line"><span class="lbl">Omzet Hari Ini</span><span class="val">Rp ${fmt(todayTotal)}</span></div>
+      <div class="report-line"><span class="lbl">Total Transaksi</span><span class="val">${S.sales.length}</span></div>
+      <div class="report-line bold"><span class="lbl">Total Omzet</span><span class="val">Rp ${fmt(allTotal)}</span></div>
+    `;
+    if (top.length) {
+      html += `<div style="margin-top:14px;font-size:11px;font-weight:800;color:var(--fg3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Produk Terlaris</div>`;
+      top.forEach(([name, v]) => {
+        html += `<div class="report-line"><span class="lbl">${esc(name)} — ${v.qty} pcs</span><span class="val">Rp ${fmt(v.total)}</span></div>`;
+      });
+    }
+    $("salesReport").innerHTML = html;
+  } catch (e) {
+    $("salesReport").innerHTML = '<div class="empty-state"><p>Gagal memuat laporan</p></div>';
+  }
+}
+
+async function loadCashReport() {
+  try {
+    const data = await api("/api/cashflow");
+    S.cashflow = data.cashflow;
+    if (!S.cashflow.length) {
+      $("cashReport").innerHTML = `<div class="empty-state" style="padding:14px"><p>Belum ada catatan arus kas</p></div>`;
+      return;
+    }
+    const recent = S.cashflow.slice().reverse().slice(0, 6);
+    $("cashReport").innerHTML = recent.map(c => {
+      const d = new Date(c.timestamp);
+      const dateStr = d.toLocaleDateString("id-ID", { day:"numeric", month:"short" });
+      const sign = c.type === "income" ? "+" : "−";
+      return `<div class="report-line">
+        <span class="lbl">
+          <span style="color:${c.type==='income'?'#5fe28e':'#f87171'};font-weight:800">${sign} ${c.type==='income'?'Masuk':'Keluar'}</span>
+          — ${esc(c.description)}
+          <div style="font-size:10px;color:var(--fg3);margin-top:2px">${dateStr} · ${esc(c.vendor||"-")}</div>
+        </span>
+        <span class="val">Rp ${fmt(c.amount)}</span>
+      </div>`;
+    }).join("");
+  } catch (e) {}
+}
+
+$("cashSubmitBtn").addEventListener("click", async () => {
+  const type = $("cashType").value;
+  const description = $("cashDesc").value.trim();
+  const amount = Number($("cashAmount").value);
+  const vendor = $("cashVendor").value.trim();
+  if (!description) { toast("Deskripsi wajib diisi", false); return; }
+  if (!Number.isFinite(amount) || amount <= 0) { toast("Nominal tidak valid", false); return; }
+  try {
+    await api("/api/cashflow", {
+      method: "POST",
+      body: JSON.stringify({ type, description, amount, vendor })
+    });
+    $("cashDesc").value = "";
+    $("cashAmount").value = "";
+    $("cashVendor").value = "";
+    toast("Catatan arus kas disimpan");
+    await loadCashReport();
+    await loadSalesReport();
+  } catch (e) {
+    toast("Gagal menyimpan", false);
+  }
+});
+
+/* ---------- Export ---------- */
+function downloadBlob(name, content, type) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 800);
+}
+
+$("exportCsvBtn").addEventListener("click", () => {
+  const cell = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const rows = [["ID","Waktu","Produk","Jumlah","Subtotal","Total"]];
+  S.sales.forEach(t => t.items.forEach(i => {
+    rows.push([t.id, new Date(t.timestamp).toLocaleString("id-ID"),
+      i.name, i.qty, i.qty*i.price, t.total]);
+  }));
+  downloadBlob("rekap-penjualan.csv", rows.map(r => r.map(cell).join(",")).join("\n"), "text/csv;charset=utf-8");
+  toast("Rekap CSV diunduh");
+});
+
+$("exportJsonBtn").addEventListener("click", async () => {
+  try {
+    const data = await api("/api/backup");
+    downloadBlob("cashierpro-backup.json", JSON.stringify(data, null, 2), "application/json;charset=utf-8");
+    toast("Backup JSON diunduh");
+  } catch (e) {
+    toast("Gagal mengunduh backup", false);
+  }
+});
+
+/* ---------- Boot ---------- */
+async function boot() {
+  await loadProducts();
+  renderCart();
+  // Periksa sesi admin saat pertama buka
+  try {
+    const s = await api("/api/session");
+    S.isAdmin = !!s.admin;
+  } catch(e){}
+}
+boot();
+</script>
+</body>
+</html>
