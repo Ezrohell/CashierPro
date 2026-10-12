@@ -1,0 +1,15 @@
+{
+  "limits": {
+    "kopi": 20,
+    "susu": 20,
+    "matcha": 20,
+    "teh": 20,
+    "indomie": 20,
+    "nasgor": 20,
+    "rotis": 20,
+    "rotim": 20
+  },
+  "dailySold": {
+    "2026-10-12": {}
+  }
+}
